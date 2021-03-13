@@ -120,8 +120,12 @@ namespace tModloaderDiscordBot.Modules
 		{
 			List<string> validRoleNames = new List<string>
 			{
-				"validrole1",
-				"validrole2"
+				"Administrators",
+				"Moderators",
+				"Trial Mods",
+				"Devs",
+				"Cool Dudes",
+				"irrelevanttestrole"
 			};
 
 			if (!GuildTag.IsKeyValid(name))
@@ -137,7 +141,7 @@ namespace tModloaderDiscordBot.Modules
 			}
 
 			if (Context.User is SocketGuildUser guildUser)
-				if (!guildUser.Roles.Any(x => validRoleNames.Contains(x.Name)))
+				if (!guildUser.Roles.Any(x => validRoleNames.Contains(x.Name)) && !guildUser.GuildPermissions.Administrator)
 				{
 					await ReplyAsync("You do not have a role that permits the addition of tags!");
 					return;
