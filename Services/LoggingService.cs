@@ -13,8 +13,8 @@ namespace tModloaderDiscordBot.Services
 	//https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1
 	public class LoggingService
 	{
-		private readonly CommandService _commandService;
 		private readonly DiscordSocketClient _client;
+		private readonly CommandService _commandService;
 		private readonly IServiceProvider _services;
 
 		public LoggingService(IServiceProvider services)

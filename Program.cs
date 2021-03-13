@@ -1,32 +1,34 @@
-﻿using Discord;
+﻿using System;
+using System.IO;
+using System.Resources;
+using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Resources;
-using System.Threading.Tasks;
 using tModloaderDiscordBot.Services;
 
 namespace tModloaderDiscordBot
 {
 	public class Program
 	{
-		public static void Main(string[] args)
-			=> new Program().StartAsync().GetAwaiter().GetResult();
-
 		internal static IUser BotOwner;
-		private CommandService _commandService;
+
+		public static bool Ready;
 		private DiscordSocketClient _client;
-		private IServiceProvider _services;
+		private CommandService _commandService;
 		private LoggingService _loggingService;
 		private ModService _modService;
+		private IServiceProvider _services;
+
+		public static void Main(string[] args) => new Program().StartAsync().GetAwaiter().GetResult();
 		//private ReactionRoleService _reactionRoleService;
 
 		private async Task StartAsync()
 		{
 			IServiceCollection BuildServiceCollection()
 			{
-				var serviceCollection =
+				IServiceCollection serviceCollection =
 					new ServiceCollection()
 						.AddSingleton(_client)
 						.AddSingleton(_commandService)
@@ -36,7 +38,8 @@ namespace tModloaderDiscordBot
 						.AddSingleton<RecruitmentChannelService>()
 						.AddSingleton<BanAppealChannelService>()
 						//.AddSingleton<ReactionRoleService>()
-						.AddSingleton(new ResourceManager("tModloaderDiscordBot.Properties.Resources", GetType().Assembly))
+						.AddSingleton(new ResourceManager("tModloaderDiscordBot.Properties.Resources",
+							GetType().Assembly))
 						.AddSingleton<LoggingService>()
 						.AddSingleton<GuildConfigService>()
 						.AddSingleton<SiteStatusService>()
@@ -46,9 +49,9 @@ namespace tModloaderDiscordBot
 
 				//foreach (var type in AppDomain.CurrentDomain.GetAssemblies()
 				//	.SelectMany(x => x.GetTypes())
-				//	.Where(x => 
-				//		x.IsAssignableFrom(typeof(IBotService)) 
-				//		&& x.IsClass 
+				//	.Where(x =>
+				//		x.IsAssignableFrom(typeof(IBotService))
+				//		&& x.IsClass
 				//		&& !x.IsAbstract))
 				//{
 				//	serviceCollection.AddSingleton(Activator.CreateInstance(type));
@@ -85,13 +88,13 @@ namespace tModloaderDiscordBot
 			_client.LatencyUpdated += ClientLatencyUpdated;
 
 			Console.Title = $@"tModLoader Bot - {DateTime.Now}";
-			await Console.Out.WriteLineAsync($"https://discordapp.com/api/oauth2/authorize?client_id=&scope=bot");
+			await Console.Out.WriteLineAsync("https://discordapp.com/api/oauth2/authorize?client_id=&scope=bot");
 			await Console.Out.WriteLineAsync($"Start date: {DateTime.Now}");
-#if TESTBOT
-			await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TestBotToken"));
-#else
-			await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TmlBotToken"));
-#endif
+			//#if TESTBOT
+			await _client.LoginAsync(TokenType.Bot, await File.ReadAllTextAsync("token.txt"));
+			//#else
+			//			await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TmlBotToken"));
+			//#endif
 			await _client.StartAsync();
 
 			await Task.Delay(-1);
@@ -106,6 +109,7 @@ namespace tModloaderDiscordBot
 				case ConnectionState.Disconnected:
 					newUserStatus = UserStatus.DoNotDisturb;
 					break;
+
 				case ConnectionState.Connecting:
 					newUserStatus = UserStatus.Idle;
 					break;
@@ -113,8 +117,6 @@ namespace tModloaderDiscordBot
 
 			await _client.SetStatusAsync(newUserStatus);
 		}
-
-		public static bool Ready;
 
 		private async Task ClientReady()
 		{
@@ -142,7 +144,6 @@ namespace tModloaderDiscordBot
 		{
 			await _services.GetRequiredService<RecruitmentChannelService>().SetupAsync();
 			_services.GetRequiredService<BanAppealChannelService>().Setup();
-			return;
 		}
 	}
 }

@@ -14,10 +14,7 @@ namespace tModloaderDiscordBot.Services
 {
 	public class GuildConfigServiceSettings
 	{
-		public string BaseDir { get; }
-
 		private readonly string _dataDir;
-		public string DataDir => Path.Combine(BaseDir, _dataDir);
 
 		public GuildConfigServiceSettings(string baseDir = "", string dataDir = "")
 		{
@@ -25,31 +22,22 @@ namespace tModloaderDiscordBot.Services
 			_dataDir = dataDir;
 		}
 
+		public string BaseDir { get; }
+		public string DataDir => Path.Combine(BaseDir, _dataDir);
+
 		public string GuildPath(ulong guildId) => Path.Combine(DataDir, guildId.ToString());
+
 		public string GuildConfigPath(ulong guildId) => Path.Combine(GuildPath(guildId), "config.json");
+
 		public bool GuildConfigExists(ulong guildId) => File.Exists(GuildConfigPath(guildId));
 	}
 
 	public class GuildConfigService
 	{
-		private readonly SemaphoreSlim _semaphore;
 		private readonly DiscordSocketClient _client;
 		private readonly IDictionary<ulong, GuildConfig> _guildConfigs;
+		private readonly SemaphoreSlim _semaphore;
 		internal readonly GuildConfigServiceSettings Settings;
-
-		public GuildConfig GetConfig(ulong id)
-		{
-			if (_guildConfigs.ContainsKey(id)) return _guildConfigs[id];
-			return null;
-		}
-
-		public IEnumerable<GuildConfig> GetAllConfigs()
-		{
-			foreach (var kvp in _guildConfigs)
-			{
-				yield return kvp.Value;
-			}
-		}
 
 		public GuildConfigService(IServiceProvider services)
 		{
@@ -60,11 +48,26 @@ namespace tModloaderDiscordBot.Services
 			_guildConfigs = new Dictionary<ulong, GuildConfig>();
 		}
 
+		public GuildConfig GetConfig(ulong id)
+		{
+			if (_guildConfigs.ContainsKey(id))
+			{
+				return _guildConfigs[id];
+			}
+
+			return null;
+		}
+
+		public IEnumerable<GuildConfig> GetAllConfigs()
+		{
+			foreach (KeyValuePair<ulong, GuildConfig> kvp in _guildConfigs) yield return kvp.Value;
+		}
+
 		public async Task SetupAsync()
 		{
 			// iterate guilds and create new configs for them
 
-			foreach (var guild in _client.Guilds.Where(x => !Settings.GuildConfigExists(x.Id)))
+			foreach (SocketGuild guild in _client.Guilds.Where(x => !Settings.GuildConfigExists(x.Id)))
 			{
 				Directory.CreateDirectory(Settings.GuildPath(guild.Id));
 				GuildConfig gConfig = new GuildConfig(guild);
@@ -87,12 +90,12 @@ namespace tModloaderDiscordBot.Services
 
 		internal async Task UpdateCache()
 		{
-			var filePaths = Directory.GetFiles(Settings.DataDir, "config.json", SearchOption.AllDirectories);
+			string[] filePaths = Directory.GetFiles(Settings.DataDir, "config.json", SearchOption.AllDirectories);
 
-			foreach (var filePath in filePaths)
+			foreach (string filePath in filePaths)
 			{
 				string json = await FileUtils.FileReadToEndAsync(_semaphore, filePath);
-				var config = JsonConvert.DeserializeObject<GuildConfig>(json);
+				GuildConfig config = JsonConvert.DeserializeObject<GuildConfig>(json);
 				await UpdateCacheForConfig(config);
 			}
 		}
@@ -100,14 +103,14 @@ namespace tModloaderDiscordBot.Services
 		internal async Task<GuildConfig> ReadGuildConfig(ulong guildId)
 		{
 			string json = await FileUtils.FileReadToEndAsync(_semaphore, Settings.GuildConfigPath(guildId));
-			var config = JsonConvert.DeserializeObject<GuildConfig>(json);
+			GuildConfig config = JsonConvert.DeserializeObject<GuildConfig>(json);
 			return config;
 		}
 
 		internal async Task WriteGuildConfig(GuildConfig config)
 		{
 			Directory.CreateDirectory(Settings.GuildPath(config.GuildId));
-			var json = JsonConvert.SerializeObject(config, Formatting.Indented);
+			string json = JsonConvert.SerializeObject(config, Formatting.Indented);
 			await FileUtils.FileWriteAsync(_semaphore, Settings.GuildConfigPath(config.GuildId), json);
 		}
 	}

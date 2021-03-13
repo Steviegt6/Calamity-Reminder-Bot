@@ -22,11 +22,15 @@ namespace tModloaderDiscordBot.Modules
 			base.BeforeExecute(command);
 
 			if (GuildConfigService == null)
+			{
 				throw new Exception("Failed to get guild config service");
+			}
 
 			Config = GuildConfigService.GetConfig(Context.Guild.Id);
 			if (Config == null)
+			{
 				throw new Exception("Failed to get guild config");
+			}
 
 			Config.Initialize(GuildConfigService);
 		}

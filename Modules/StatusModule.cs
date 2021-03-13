@@ -2,7 +2,9 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using tModloaderDiscordBot.Components;
 using tModloaderDiscordBot.Preconditions;
 using tModloaderDiscordBot.Services;
@@ -27,11 +29,11 @@ namespace tModloaderDiscordBot.Modules
 		[Priority(1)]
 		public async Task RemoveAsync(params string[] args)
 		{
-			foreach (var noa in args)
+			foreach (string noa in args)
 			{
-				var name = noa.ToLowerInvariant();
-				var address = noa;
-				var msg = await ReplyAsync($"Validating address...");
+				string name = noa.ToLowerInvariant();
+				string address = noa;
+				IUserMessage msg = await ReplyAsync("Validating address...");
 
 				if (StatusService.HasName(name))
 				{
@@ -61,12 +63,12 @@ namespace tModloaderDiscordBot.Modules
 		[Priority(1)]
 		public async Task AddAsync(string nameParam, string addrParam)
 		{
-			var msg = await ReplyAsync($"Validating address...");
+			IUserMessage msg = await ReplyAsync("Validating address...");
 
-			var name = nameParam.ToLowerInvariant();
-			var addr = addrParam;/* addrParam.ToLowerInvariant();*/
+			string name = nameParam.ToLowerInvariant();
+			string addr = addrParam; /* addrParam.ToLowerInvariant();*/
 			SiteStatus.CheckUriPrefix(ref addr);
-			var isLegit = SiteStatus.IsUriLegit(addr, out var uri);
+			bool isLegit = SiteStatus.IsUriLegit(addr, out Uri uri);
 
 			if (!isLegit)
 			{
@@ -94,15 +96,15 @@ namespace tModloaderDiscordBot.Modules
 
 		[Command]
 		[Priority(-99)]
-		public async Task Default([Remainder]string toCheckParam = "")
+		public async Task Default([Remainder] string toCheckParam = "")
 		{
-			var msg = await Context.Channel.SendMessageAsync("Performing status checks...");
+			RestUserMessage msg = await Context.Channel.SendMessageAsync("Performing status checks...");
 
 			try
 			{
-				var sb = new StringBuilder();
+				StringBuilder sb = new StringBuilder();
 
-				var toCheck = toCheckParam.ToLowerInvariant();
+				string toCheck = toCheckParam.ToLowerInvariant();
 
 				if (toCheck.Length > 0)
 				{
@@ -113,11 +115,17 @@ namespace tModloaderDiscordBot.Modules
 						return;
 					}
 
-					var cachedResult = StatusService.GetCachedResult(toCheck);
+					(string cachedResult, string url) cachedResult = StatusService.GetCachedResult(toCheck);
 					if (!cachedResult.IsDefault())
-						await msg.ModifyAsync(x => x.Content = string.Format("{0} {1} {2}", (toCheck + ":"), ("`" + cachedResult.cachedResult + "`"), ("(" + cachedResult.url + ")")));
+					{
+						await msg.ModifyAsync(x => x.Content = string.Format("{0} {1} {2}", toCheck + ":",
+							                      "`" + cachedResult.cachedResult + "`", "(" + cachedResult.url + ")"));
+					}
 					else
+					{
 						await msg.ModifyAsync(x => x.Content = "Something went wrong.");
+					}
+
 					return;
 				}
 
@@ -127,9 +135,10 @@ namespace tModloaderDiscordBot.Modules
 					return;
 				}
 
-				foreach (var status in StatusService.AllSiteStatuses())
+				foreach (SiteStatus status in StatusService.AllSiteStatuses())
 				{
-					var editString = string.Format("{0} {1} {2}", (status.Name + ":"), ("`" + status.CachedResult + "`"), ("(" + status.Address + ")"));
+					string editString = string.Format("{0} {1} {2}", status.Name + ":", "`" + status.CachedResult + "`",
+						"(" + status.Address + ")");
 					sb.AppendLine(editString);
 				}
 

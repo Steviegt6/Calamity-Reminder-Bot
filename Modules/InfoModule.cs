@@ -28,7 +28,7 @@ namespace tModloaderDiscordBot.Modules
 				procMem = proc.PrivateMemorySize64;
 			}
 
-			var eb = new EmbedBuilder
+			EmbedBuilder eb = new EmbedBuilder
 			{
 				Title = "Bot",
 				Description = $"{Context.Client.CurrentUser.FullName()}",
@@ -59,7 +59,7 @@ namespace tModloaderDiscordBot.Modules
 						Name = "Owner",
 						Value = resourceManager.GetString("author")
 					}
-				},
+				}
 			};
 
 			await ReplyAsync(string.Empty, embed: eb.Build());
@@ -69,9 +69,9 @@ namespace tModloaderDiscordBot.Modules
 		[Alias("guild", "-g")]
 		public async Task ServerAsync()
 		{
-			var guild = Context.Guild;
+			SocketGuild guild = Context.Guild;
 
-			var eb = new EmbedBuilder
+			EmbedBuilder eb = new EmbedBuilder
 			{
 				Title = "Guild",
 				Description = $"{guild.Name}",
@@ -125,7 +125,7 @@ namespace tModloaderDiscordBot.Modules
 						IsInline = true,
 						Name = "# Voice channels",
 						Value = guild.VoiceChannels.Count
-					},
+					}
 				}
 			};
 
@@ -136,9 +136,9 @@ namespace tModloaderDiscordBot.Modules
 		public async Task RoleAsync(IRole role)
 		{
 			await role.Guild.DownloadUsersAsync();
-			var users = await role.Guild.GetUsersAsync();
+			IReadOnlyCollection<IGuildUser> users = await role.Guild.GetUsersAsync();
 
-			var eb = new EmbedBuilder
+			EmbedBuilder eb = new EmbedBuilder
 			{
 				Title = "Role",
 				Description = role.Name,
@@ -168,7 +168,7 @@ namespace tModloaderDiscordBot.Modules
 						IsInline = true,
 						Name = "Users",
 						Value = users.Count(x => x.RoleIds.Contains(role.Id))
-					},
+					}
 				}
 			};
 
@@ -178,7 +178,7 @@ namespace tModloaderDiscordBot.Modules
 		[Command]
 		public async Task UserAsync(IGuildUser user)
 		{
-			var eb = new EmbedBuilder
+			EmbedBuilder eb = new EmbedBuilder
 			{
 				Title = "User",
 				Description = $"{user.Username}#{user.Discriminator}",
@@ -189,40 +189,41 @@ namespace tModloaderDiscordBot.Modules
 					IconUrl = Context.User.GetAvatarUrl()
 				},
 				Timestamp = DateTimeOffset.UtcNow,
-				Color = (user as SocketGuildUser)?.Roles.Where(x => !x.Name.EqualsIgnoreCase("@everyone")).OrderByDescending(x => x.Position).FirstOrDefault()?.Color,
+				Color = (user as SocketGuildUser)?.Roles.Where(x => !x.Name.EqualsIgnoreCase("@everyone"))
+					.OrderByDescending(x => x.Position).FirstOrDefault()?.Color,
 				Fields = new List<EmbedFieldBuilder>
+				{
+					new EmbedFieldBuilder
 					{
-						new EmbedFieldBuilder
-						{
-							IsInline = true,
-							Name = "Name",
-							Value = $"{user.Username}{(user.Nickname?.Length > 0 ? $" : {user.Nickname}" : "")}"
-						},
-						new EmbedFieldBuilder
-						{
-							IsInline = true,
-							Name = "ID",
-							Value = user.Id
-						},
-						new EmbedFieldBuilder
-						{
-							IsInline = true,
-							Name = "IsBot",
-							Value = user.IsBot
-						},
-						new EmbedFieldBuilder
-						{
-							IsInline = true,
-							Name = "IsWebhook",
-							Value = user.IsWebhook
-						},
-						//new EmbedFieldBuilder
-						//{
-						//	IsInline = true,
-						//	Name = "Roles",
-						//	Value = $"{user.RoleIds.Count} (stickied: {user.RoleIds.Count(Config.IsStickyRole)})"
-						//},
+						IsInline = true,
+						Name = "Name",
+						Value = $"{user.Username}{(user.Nickname?.Length > 0 ? $" : {user.Nickname}" : "")}"
+					},
+					new EmbedFieldBuilder
+					{
+						IsInline = true,
+						Name = "ID",
+						Value = user.Id
+					},
+					new EmbedFieldBuilder
+					{
+						IsInline = true,
+						Name = "IsBot",
+						Value = user.IsBot
+					},
+					new EmbedFieldBuilder
+					{
+						IsInline = true,
+						Name = "IsWebhook",
+						Value = user.IsWebhook
 					}
+					//new EmbedFieldBuilder
+					//{
+					//	IsInline = true,
+					//	Name = "Roles",
+					//	Value = $"{user.RoleIds.Count} (stickied: {user.RoleIds.Count(Config.IsStickyRole)})"
+					//},
+				}
 			};
 
 			await ReplyAsync(string.Empty, embed: eb.Build());

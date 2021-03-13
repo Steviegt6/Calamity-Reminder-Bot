@@ -6,28 +6,26 @@ using tModloaderDiscordBot.Components;
 
 namespace tModloaderDiscordBot.Services
 {
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public abstract class BaseConfigService : BaseService
-    {
-	    protected readonly GuildConfigService _guildConfigService;
-	    protected GuildConfig _guildConfig;
-	    protected ulong _gid;
+	[SuppressMessage("ReSharper", "InconsistentNaming")]
+	public abstract class BaseConfigService : BaseService
+	{
+		protected readonly GuildConfigService _guildConfigService;
+		protected ulong _gid;
+		protected GuildConfig _guildConfig;
 
-	    protected BaseConfigService(IServiceProvider services) : base(services)
-	    {
+		protected BaseConfigService(IServiceProvider services) : base(services) =>
 			_guildConfigService = services.GetRequiredService<GuildConfigService>();
-		}
 
-	    public virtual void Initialize(ulong gid)
-	    {
-		    _gid = gid;
-		    _guildConfig = _guildConfigService.GetConfig(gid);
+		public virtual void Initialize(ulong gid)
+		{
+			_gid = gid;
+			_guildConfig = _guildConfigService.GetConfig(gid);
 			_guildConfig.Initialize(_guildConfigService);
 		}
 
-	    public async Task RequestConfigUpdate()
-	    {
-		    await _guildConfig.Update();
-	    }
+		public async Task RequestConfigUpdate()
+		{
+			await _guildConfig.Update();
+		}
 	}
 }

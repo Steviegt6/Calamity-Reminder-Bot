@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace tModloaderDiscordBot.Modules
+﻿namespace tModloaderDiscordBot.Modules
 {
-    class ModModule : BotModuleBase
-    {
-
-    }
+	internal class ModModule : BotModuleBase { }
 }

@@ -18,11 +18,12 @@ namespace tModloaderDiscordBot.Modules
 	[Group("tag")]
 	public class TagModule : ConfigModuleBase
 	{
-		internal static readonly Dictionary<ulong, Tuple<ulong, ulong>> DeleteableTags = new Dictionary<ulong, Tuple<ulong, ulong>>(); // bot message id, <requester user id, original request message>
+		internal static readonly Dictionary<ulong, Tuple<ulong, ulong>> DeleteableTags =
+			new Dictionary<ulong, Tuple<ulong, ulong>>(); // bot message id, <requester user id, original request message>
 
 		public TagModule(IServiceProvider services)
 		{
-			var _client = services.GetRequiredService<DiscordSocketClient>();
+			DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
 
 			_client.ReactionAdded += HandleReactionAdded;
 		}
@@ -35,23 +36,32 @@ namespace tModloaderDiscordBot.Modules
 			TagService.Initialize(Context.Guild.Id);
 		}
 
-		internal static void AppendTags(StringBuilder sb, IEnumerable<GuildTag> tags, int page, int numPages, SocketGuild guild)
+		internal static void AppendTags(StringBuilder sb, IEnumerable<GuildTag> tags, int page, int numPages,
+			SocketGuild guild)
 		{
 			sb.AppendLine($"Tags found -- Page {page}/{numPages} -- (Showing up to 10 per page)");
 
-			for (int i = 0; i < tags.Count(); i++)
+			IEnumerable<GuildTag> guildTags = tags.ToList();
+			for (int i = 0; i < guildTags.Count(); i++)
 			{
-				var t = tags.ElementAt(i);
-				sb.AppendLine($"{i}) {guild.GetUser(t.OwnerId).FullName()}: {t.Name} `.tag -g {t.OwnerId} {t.Name}`{(t.IsGlobal ? " (g)" : "")}");
+				GuildTag t = guildTags.ElementAt(i);
+				sb.AppendLine(
+					$"{i}) {guild.GetUser(t.OwnerId).FullName()}: {t.Name} `.tag -g {t.OwnerId} {t.Name}`{(t.IsGlobal ? " (g)" : "")}");
 			}
 		}
 
-		internal static void Paginate(int max, ref int page, ref IEnumerable<GuildTag> tags, ref int totalPages)
+		internal static void Paginate(int max, ref int page, ref IEnumerable<GuildTag> tags, out int totalPages)
 		{
-			totalPages = (int)Math.Ceiling((float)max / 10f);
+			totalPages = (int) Math.Ceiling(max / 10f);
 
-			if (page < 1) page = 1;
-			else if (page > totalPages) page = totalPages;
+			if (page < 1)
+			{
+				page = 1;
+			}
+			else if (page > totalPages)
+			{
+				page = totalPages;
+			}
 
 			tags = tags.Skip(10 * page - 10).Take(10);
 		}
@@ -70,24 +80,27 @@ namespace tModloaderDiscordBot.Modules
 		[Alias("-f")]
 		public async Task FindAsync(string predicate, int page = 1)
 		{
-			await ListAsync(TagService.GuildTags.Where(x => x.Name.Contains(predicate) || x.Value.Contains(predicate)), page);
+			await ListAsync(TagService.GuildTags.Where(x => x.Name.Contains(predicate) || x.Value.Contains(predicate)),
+				page);
 		}
 
 		private async Task ListAsync(IEnumerable<GuildTag> tags, int page)
 		{
-			if (!tags.Any())
+			IEnumerable<GuildTag> enumerable = tags.ToList();
+			IEnumerable<GuildTag> guildTags = enumerable.ToList();
+			if (!guildTags.Any())
 			{
-				await ReplyAsync($"No tags found.");
+				await ReplyAsync("No tags found.");
 				return;
 			}
-			var allTags = new List<GuildTag>(tags);
-			int totalPages = 0;
-			Paginate(tags.Count(), ref page, ref tags, ref totalPages);
 
-			var sb = new StringBuilder();
-			AppendTags(sb, tags, page, totalPages, Context.Guild);
+			List<GuildTag> unused = new List<GuildTag>(guildTags);
+			Paginate(guildTags.Count(), ref page, ref guildTags, out int totalPages);
 
-			var msg = await ReplyAsync(sb.ToString());
+			StringBuilder sb = new StringBuilder();
+			AppendTags(sb, enumerable, page, totalPages, Context.Guild);
+
+			IUserMessage unused1 = await ReplyAsync(sb.ToString());
 
 			//@ todo emoji response
 			//Config.TagListCache.Add(new CachedTagList
@@ -103,11 +116,11 @@ namespace tModloaderDiscordBot.Modules
 
 		[Command("add")]
 		[Alias("-a")]
-		public async Task AddAsync(string name, [Remainder]string value)
+		public async Task AddAsync(string name, [Remainder] string value)
 		{
 			if (!GuildTag.IsKeyValid(name))
 			{
-				await ReplyAsync($"Key for tag is not valid. Make sure there are no spaces.");
+				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
 				return;
 			}
 
@@ -128,7 +141,7 @@ namespace tModloaderDiscordBot.Modules
 		{
 			if (!GuildTag.IsKeyValid(key))
 			{
-				await ReplyAsync($"Key for tag is not valid. Make sure there are no spaces.");
+				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
 				return;
 			}
 
@@ -138,21 +151,20 @@ namespace tModloaderDiscordBot.Modules
 				return;
 			}
 
-			var tag = TagService.GetTag(Context.User.Id, key.ToLowerInvariant());
+			GuildTag tag = TagService.GetTag(Context.User.Id, key.ToLowerInvariant());
 			await TagService.RemoveTag(tag);
 			await ReplyAsync($"Tag `{key}` was removed");
 		}
 
+		[Command("edit")]
+		[Alias("-e")]
+		public async Task EditAsync(string key, [Remainder] string value) =>
+			await EditAsync(Context.User.Id, key, value);
 
 		[Command("edit")]
 		[Alias("-e")]
-		public async Task EditAsync(string key, [Remainder] string value)
-			=> await EditAsync(Context.User.Id, key, value);
-
-		[Command("edit")]
-		[Alias("-e")]
-		public async Task EditAsync(IGuildUser user, string key, [Remainder] string value)
-			=> await EditAsync(user.Id, key, value);
+		public async Task EditAsync(IGuildUser user, string key, [Remainder] string value) =>
+			await EditAsync(user.Id, key, value);
 
 		[Command("edit")]
 		[Alias("-e")]
@@ -160,7 +172,7 @@ namespace tModloaderDiscordBot.Modules
 		{
 			if (!GuildTag.IsKeyValid(key))
 			{
-				await ReplyAsync($"Key for tag is not valid. Make sure there are no spaces.");
+				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
 				return;
 			}
 
@@ -170,7 +182,7 @@ namespace tModloaderDiscordBot.Modules
 				return;
 			}
 
-			var tag = TagService.GetTag(id, key);
+			GuildTag tag = TagService.GetTag(id, key);
 
 			if (tag != null && tag.IsOwner(id))
 			{
@@ -189,28 +201,24 @@ namespace tModloaderDiscordBot.Modules
 		}
 
 		[Command]
-		public async Task Default(IGuildUser user, string key)
-			=> await GetAsync(user.Id, key);
+		public async Task Default(IGuildUser user, string key) => await GetAsync(user.Id, key);
 
 		[Command]
-		public async Task Default(string key)
-			=> await GetAsync(Context.User.Id, key);
+		public async Task Default(string key) => await GetAsync(Context.User.Id, key);
 
 		[Command("get")]
 		[Alias("-g")]
-		public async Task GetAsync(string key)
-			=> await GetAsync(Context.User.Id, key);
+		public async Task GetAsync(string key) => await GetAsync(Context.User.Id, key);
 
 		[Command("get")]
 		[Alias("-g")]
-		public async Task GetAsync(IGuildUser user, string key)
-			=> await GetAsync(user.Id, key);
+		public async Task GetAsync(IGuildUser user, string key) => await GetAsync(user.Id, key);
 
 		private async Task GetAsync(ulong id, string key)
 		{
 			if (!GuildTag.IsKeyValid(key))
 			{
-				await ReplyAsync($"Key for tag is not valid. Make sure there are no spaces.");
+				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
 				return;
 			}
 
@@ -220,8 +228,8 @@ namespace tModloaderDiscordBot.Modules
 				return;
 			}
 
-			var tag = TagService.GetTag(id, key);
-			var msg = await ReplyAsync(WriteTag(tag, Context.Guild.GetUser(tag.OwnerId).FullName()));
+			GuildTag tag = TagService.GetTag(id, key);
+			IUserMessage msg = await ReplyAsync(WriteTag(tag, Context.Guild.GetUser(tag.OwnerId).FullName()));
 
 			await msg.AddReactionAsync(new Emoji("❌"));
 			await Context.Message.DeleteAsync();
@@ -236,31 +244,24 @@ namespace tModloaderDiscordBot.Modules
 			return sb.ToString();
 		}
 
-		private async Task<IEnumerable<GuildTag>> TryFindOtherTags(string key, int page = 1)
+		private async Task TryFindOtherTags(string key, int page = 1)
 		{
 			IEnumerable<GuildTag> tags;
-			if (key.EqualsIgnoreCase("tags::global"))
-			{
-				tags = TagService.GuildTags.Where(x => x.IsGlobal);
-			}
-			else
-			{
-				tags = TagService.GetTags(key);
-			}
+			tags = key.EqualsIgnoreCase("tags::global") 
+				? TagService.GuildTags.Where(x => x.IsGlobal) 
+				: TagService.GetTags(key);
 
 			await ListAsync(tags, page);
-			return tags;
 		}
 
 		[Command("global")]
 		[HasPermission]
-		public async Task GlobalAsync(string key, bool toggle)
-			=> await GlobalAsync(Context.User.Id, key, toggle);
+		public async Task GlobalAsync(string key, bool toggle) => await GlobalAsync(Context.User.Id, key, toggle);
 
 		[Command("global")]
 		[HasPermission]
-		public async Task GlobalAsync(IGuildUser user, string key, bool toggle)
-			=> await GlobalAsync(user.Id, key, toggle);
+		public async Task GlobalAsync(IGuildUser user, string key, bool toggle) =>
+			await GlobalAsync(user.Id, key, toggle);
 
 		private async Task GlobalAsync(ulong id, string key, bool toggle)
 		{
@@ -268,7 +269,7 @@ namespace tModloaderDiscordBot.Modules
 
 			if (!CheckKeyValidity())
 			{
-				await ReplyAsync($"Invalid key. Key must not contain any markdown and whitespace.");
+				await ReplyAsync("Invalid key. Key must not contain any markdown and whitespace.");
 				return;
 			}
 
@@ -278,7 +279,7 @@ namespace tModloaderDiscordBot.Modules
 				return;
 			}
 
-			var tag = TagService.GetTags(id).FirstOrDefault(x => x.MatchesName(key));
+			GuildTag tag = TagService.GetTags(id).FirstOrDefault(x => x.MatchesName(key));
 
 			if (tag != null)
 			{
@@ -288,12 +289,14 @@ namespace tModloaderDiscordBot.Modules
 			}
 		}
 
-		private async Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+		private static async Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
+			SocketReaction reaction)
 		{
 			bool delete = false;
-			if (DeleteableTags.TryGetValue(message.Id, out Tuple<ulong, ulong> originalMessageAuthorAndMessage) && reaction.User.Value is SocketGuildUser reactionUser)
+			if (DeleteableTags.TryGetValue(message.Id, out Tuple<ulong, ulong> originalMessageAuthorAndMessage) &&
+			    reaction.User.Value is SocketGuildUser reactionUser)
 			{
-				if(originalMessageAuthorAndMessage.Item1 == reactionUser.Id && reaction.Emote.Equals(new Emoji("❌")))
+				if (originalMessageAuthorAndMessage.Item1 == reactionUser.Id && reaction.Emote.Equals(new Emoji("❌")))
 				{
 					delete = true;
 				}

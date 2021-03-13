@@ -1,6 +1,4 @@
 ﻿namespace tModloaderDiscordBot.Services
 {
-    interface IBotService
-    {
-    }
+	internal interface IBotService { }
 }

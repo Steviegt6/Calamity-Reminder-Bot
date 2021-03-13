@@ -8,17 +8,11 @@ namespace tModloaderDiscordBot.Components
 {
 	public sealed class GuildConfig
 	{
+		[JsonIgnore] private GuildConfigService _guildConfigService;
 		public ulong GuildId;
-		public IList<SiteStatus> SiteStatuses = new List<SiteStatus>();
 		public IList<GuildTag> GuildTags = new List<GuildTag>();
 		public BotPermissions Permissions = new BotPermissions();
-
-		[JsonIgnore] private GuildConfigService _guildConfigService;
-
-		public void Initialize(GuildConfigService guildConfigService)
-		{
-			_guildConfigService = guildConfigService;
-		}
+		public IList<SiteStatus> SiteStatuses = new List<SiteStatus>();
 
 		public GuildConfig(SocketGuild guild)
 		{
@@ -28,9 +22,17 @@ namespace tModloaderDiscordBot.Components
 			}
 		}
 
+		public void Initialize(GuildConfigService guildConfigService)
+		{
+			_guildConfigService = guildConfigService;
+		}
+
 		public async Task<bool> Update()
 		{
-			if (_guildConfigService == null) return false;
+			if (_guildConfigService == null)
+			{
+				return false;
+			}
 
 			await _guildConfigService.UpdateCacheForConfig(this);
 			await _guildConfigService.WriteGuildConfig(this);
