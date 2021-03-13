@@ -18,7 +18,7 @@ namespace tModloaderDiscordBot
 		private DiscordSocketClient _client;
 		private CommandService _commandService;
 		private LoggingService _loggingService;
-		private ModService _modService;
+		//private ModService _modService;
 		private IServiceProvider _services;
 
 		public static void Main(string[] args) => new Program().StartAsync().GetAwaiter().GetResult();
@@ -34,9 +34,9 @@ namespace tModloaderDiscordBot
 						.AddSingleton(_commandService)
 						.AddSingleton<UserHandlerService>()
 						.AddSingleton<CommandHandlerService>()
-						.AddSingleton<HastebinService>()
-						.AddSingleton<RecruitmentChannelService>()
-						.AddSingleton<BanAppealChannelService>()
+						//.AddSingleton<HastebinService>()
+						//.AddSingleton<RecruitmentChannelService>()
+						//.AddSingleton<BanAppealChannelService>()
 						//.AddSingleton<ReactionRoleService>()
 						.AddSingleton(new ResourceManager("tModloaderDiscordBot.Properties.Resources",
 							GetType().Assembly))
@@ -44,8 +44,8 @@ namespace tModloaderDiscordBot
 						.AddSingleton<GuildConfigService>()
 						.AddSingleton<SiteStatusService>()
 						.AddSingleton<GuildTagService>()
-						.AddSingleton<PermissionService>()
-						.AddSingleton<ModService>();
+						.AddSingleton<PermissionService>();
+						//.AddSingleton<ModService>()
 
 				//foreach (var type in AppDomain.CurrentDomain.GetAssemblies()
 				//	.SelectMany(x => x.GetTypes())
@@ -78,13 +78,13 @@ namespace tModloaderDiscordBot
 			await _services.GetRequiredService<CommandHandlerService>().InitializeAsync();
 			_loggingService = _services.GetRequiredService<LoggingService>();
 			_loggingService.InitializeAsync();
-			_modService = _services.GetRequiredService<ModService>();
+			//_modService = _services.GetRequiredService<ModService>();
 			//_reactionRoleService = _services.GetRequiredService<ReactionRoleService>();
-			_services.GetRequiredService<HastebinService>();
-			_services.GetRequiredService<RecruitmentChannelService>();
+			//_services.GetRequiredService<HastebinService>();
+			//_services.GetRequiredService<RecruitmentChannelService>();
 
 			_client.Ready += ClientReady;
-			_client.GuildAvailable += ClientGuildAvailable;
+			//_client.GuildAvailable += ClientGuildAvailable;
 			_client.LatencyUpdated += ClientLatencyUpdated;
 
 			Console.Title = $@"tModLoader Bot - {DateTime.Now}";
@@ -128,22 +128,22 @@ namespace tModloaderDiscordBot
 
 			await _services.GetRequiredService<GuildConfigService>().SetupAsync();
 			await _services.GetRequiredService<SiteStatusService>().UpdateAsync();
-			await _modService.Initialize();
-			await _modService.Maintain(_client);
+			//await _modService.Initialize();
+			//await _modService.Maintain(_client);
 			//await _reactionRoleService.Maintain(_client);
 			//Odd bug, doesn't work here on tmod server. Check if this works once discord.net updates.
 			//await _services.GetRequiredService<RecruitmentChannelService>().SetupAsync();
 
 			await _loggingService.Log(new LogMessage(LogSeverity.Info, "ClientReady", "Done."));
-			await _client.SetGameAsync("tModLoader " + ModService.tMLVersion);
+			await _client.SetGameAsync("Sorting through clipboards...");
 			await ClientLatencyUpdated(_client.Latency, _client.Latency);
 			Ready = true;
 		}
 
-		private async Task ClientGuildAvailable(SocketGuild arg)
+		/*private async Task ClientGuildAvailable(SocketGuild arg)
 		{
-			await _services.GetRequiredService<RecruitmentChannelService>().SetupAsync();
-			_services.GetRequiredService<BanAppealChannelService>().Setup();
-		}
+			//await _services.GetRequiredService<RecruitmentChannelService>().SetupAsync();
+			//_services.GetRequiredService<BanAppealChannelService>().Setup();
+		}*/
 	}
 }

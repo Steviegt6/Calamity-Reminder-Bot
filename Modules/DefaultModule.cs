@@ -27,7 +27,7 @@ namespace tModloaderDiscordBot.Modules
 		private static readonly Dictionary<string, HashSet<string>> vanillaFields =
 			new Dictionary<string, HashSet<string>>();
 
-		public ModService ModService { get; set; }
+		//public ModService ModService { get; set; }
 
 		//public BaseModule(CommandService commandService, GuildConfigService guildConfigService) : base(commandService, guildConfigService)
 		//{
@@ -61,7 +61,7 @@ namespace tModloaderDiscordBot.Modules
 				                      GetDeltaString(elapsed, clientLatency));
 		}
 
-		[Command("widget")]
+		/*[Command("widget")]
 		[Alias("widgetimg", "widgetimage")]
 		[Summary("Generates a widget image of specified mod")]
 		[Remarks("widget <mod>\nwidget examplemod")]
@@ -92,7 +92,7 @@ namespace tModloaderDiscordBot.Modules
 					await msg.DeleteAsync();
 				}
 			}
-		}
+		}*/
 
 		[Command("wikis")]
 		[Alias("ws")]
@@ -254,7 +254,7 @@ namespace tModloaderDiscordBot.Modules
 			}
 		}
 
-		[Command("mod")]
+		/*[Command("mod")]
 		[Alias("modinfo")]
 		[Summary("Shows info about a mod")]
 		[Remarks("mod <internal modname> --OR-- mod <part of name>\nmod examplemod")]
@@ -347,10 +347,10 @@ namespace tModloaderDiscordBot.Modules
 
 				await ReplyAsync("", embed: eb.Build());
 			}
-		}
+		}*/
 
 		// Helper method
-		private async Task<(bool, string)> ShowSimilarMods(string mod)
+		/*private async Task<(bool, string)> ShowSimilarMods(string mod)
 		{
 			IEnumerable<string> mods = ModService.Mods.Where(m => string.Equals(m, mod, StringComparison.CurrentCultureIgnoreCase));
 
@@ -400,6 +400,6 @@ namespace tModloaderDiscordBot.Modules
 
 			await ReplyAsync($"{msg}{modMsg}");
 			return (false, string.Empty);
-		}
+		}*/
 	}
 }
