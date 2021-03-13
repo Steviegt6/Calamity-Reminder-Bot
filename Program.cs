@@ -66,6 +66,12 @@ namespace tModloaderDiscordBot
 			_client = new DiscordSocketClient(new DiscordSocketConfig
 			{
 				AlwaysDownloadUsers = true,
+				GatewayIntents =
+					GatewayIntents.Guilds |
+					GatewayIntents.GuildMembers |
+					GatewayIntents.GuildMessageReactions |
+					GatewayIntents.GuildMessages |
+					GatewayIntents.GuildVoiceStates,
 				LogLevel = LogSeverity.Verbose
 			});
 			_commandService = new CommandService(new CommandServiceConfig

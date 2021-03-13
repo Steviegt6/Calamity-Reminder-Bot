@@ -118,6 +118,12 @@ namespace tModloaderDiscordBot.Modules
 		[Alias("-a")]
 		public async Task AddAsync(string name, [Remainder] string value)
 		{
+			List<string> validRoleNames = new List<string>
+			{
+				"validrole1",
+				"validrole2"
+			};
+
 			if (!GuildTag.IsKeyValid(name))
 			{
 				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
@@ -129,6 +135,13 @@ namespace tModloaderDiscordBot.Modules
 				await ReplyAsync($"You already own a tag named `{name}`");
 				return;
 			}
+
+			if (Context.User is SocketGuildUser guildUser)
+				if (!guildUser.Roles.Any(x => validRoleNames.Contains(x.Name)))
+				{
+					await ReplyAsync("You do not have a role that permits the addition of tags!");
+					return;
+				}
 
 			name = name.ToLowerInvariant();
 			await TagService.AddNewTag(Context.User.Id, name, value);
