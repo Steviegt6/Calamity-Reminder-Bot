@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using tModloaderDiscordBot.Components;
+using tModloaderDiscordBot.Modules;
 using tModloaderDiscordBot.Services;
 using tModloaderDiscordBot.Utils;
 
@@ -21,7 +23,8 @@ namespace tModloaderDiscordBot.Preconditions
 			bool HasPermissions(string key, IGuildUser user, BotPermissions gPerms)
 			{
 				return gPerms.HasPermission(key, user.Id)
-				       || user.RoleIds.Any(x => gPerms.HasPermission(key, x));
+				       || user.RoleIds.Any(x => gPerms.HasPermission(key, x))
+				       || user.RoleIds.Any(x => TagModule.AdminRoleIDs.Contains(x));
 			}
 
 			if (context.Guild == null)
@@ -52,7 +55,7 @@ namespace tModloaderDiscordBot.Preconditions
 
 			if (!(context.User is IGuildUser gUser))
 			{
-				return PreconditionResult.FromError("User is not a IGuildUser");
+				return PreconditionResult.FromError("User is not an IGuildUser");
 			}
 
 			// If we are blocked, we cannot proceed.

@@ -18,6 +18,23 @@ namespace tModloaderDiscordBot.Modules
 	[Group("tag")]
 	public class TagModule : ConfigModuleBase
 	{
+		public static List<string> ValidRoleNames = new List<string>
+		{
+			"Administrators",
+			"Moderators",
+			"Trial Mods",
+			"Devs",
+			"Cool Dudes",
+			"irrelevanttestrole"
+		};
+
+		public static List<ulong> AdminRoleIDs = new List<ulong>
+		{
+			350612458261577728, //"Administrators",
+			225032353137819651, //"Moderators",
+			820209810628673536  //"irrelevanttesrole"
+		};
+
 		internal static readonly Dictionary<ulong, Tuple<ulong, ulong>> DeleteableTags =
 			new Dictionary<ulong, Tuple<ulong, ulong>>(); // bot message id, <requester user id, original request message>
 
@@ -118,16 +135,6 @@ namespace tModloaderDiscordBot.Modules
 		[Alias("-a")]
 		public async Task AddAsync(string name, [Remainder] string value)
 		{
-			List<string> validRoleNames = new List<string>
-			{
-				"Administrators",
-				"Moderators",
-				"Trial Mods",
-				"Devs",
-				"Cool Dudes",
-				"irrelevanttestrole"
-			};
-
 			if (!GuildTag.IsKeyValid(name))
 			{
 				await ReplyAsync("Key for tag is not valid. Make sure there are no spaces.");
@@ -141,7 +148,7 @@ namespace tModloaderDiscordBot.Modules
 			}
 
 			if (Context.User is SocketGuildUser guildUser)
-				if (!guildUser.Roles.Any(x => validRoleNames.Contains(x.Name)) && !guildUser.GuildPermissions.Administrator)
+				if (!guildUser.Roles.Any(x => ValidRoleNames.Contains(x.Name)) && !guildUser.GuildPermissions.Administrator)
 				{
 					await ReplyAsync("You do not have a role that permits the addition of tags!");
 					return;
@@ -273,15 +280,13 @@ namespace tModloaderDiscordBot.Modules
 
 		[Command("global")]
 		[HasPermission]
-		public async Task GlobalAsync(string key, bool toggle) => await GlobalAsync(Context.User.Id, key, toggle);
+		public async Task GlobalAsync(string key, bool toggle) => await GlobalAsync(Context.User, key, toggle);
 
 		[Command("global")]
 		[HasPermission]
-		public async Task GlobalAsync(IGuildUser user, string key, bool toggle) =>
-			await GlobalAsync(user.Id, key, toggle);
-
-		private async Task GlobalAsync(ulong id, string key, bool toggle)
+		private async Task GlobalAsync(SocketUser user, string key, bool toggle)
 		{
+			ulong id = user.Id;
 			bool CheckKeyValidity() => Format.Sanitize(key).Equals(key) && !key.Contains(" ");
 
 			if (!CheckKeyValidity())
@@ -294,7 +299,7 @@ namespace tModloaderDiscordBot.Modules
 			{
 				await TryFindOtherTags(key);
 				return;
-			}
+			} 
 
 			GuildTag tag = TagService.GetTags(id).FirstOrDefault(x => x.MatchesName(key));
 
